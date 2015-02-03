@@ -75,21 +75,17 @@ class FastlyAPI {
     $url = get_option('fastly_api_hostname') . "/purge/" . preg_replace("/^http(s?):\/\//",'', $url);
 
 	if( (bool)get_option('fastly_log_purges') ) {
-      error_log("Purging using POST for " . $url);
+      error_log("Purging using POST for " . esc_url($url));
     }
 
-    curl_setopt($ch, CURLOPT_URL, $url );
-    if ($do_post) {
-      curl_setopt($ch, CURLOPT_POST, 1);
-    } else {
-      curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PURGE");      
-    }
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $response = curl_exec($ch);
-    curl_close($ch);
-    return !!$response;
-    
+    $args = array(
+        'headers' => $headers,
+        'method'  => (true === $do_post) ? 'POST' : 'PURGE',
+    );
+
+    $response = wp_remote_request($url, $args);
+
+    return ( is_wp_error( $response ) ) ? -1 : $response;
   }
 } 
 
